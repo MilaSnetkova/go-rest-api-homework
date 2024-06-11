@@ -44,17 +44,23 @@ func getTasks(w http.ResponseWriter, r *http.Request) {
 	// сериализуем данные из слайса tasks
 	resp, err := json.Marshal(tasks)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Ошибка сериализации: %s", err.Error()), http.StatusInternalServerError)
+		fmt.Printf("Ошибка сериализации: %s\n", err.Error())
+		http.Error(w, "Ошибка сервера", http.StatusInternalServerError)
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
-	w.Write(resp)
+	if _, err := w.Write(resp); err != nil {
+		// Логируем ошибку записи
+		fmt.Printf("Ошибка записи ответа: %s\n", err.Error())
+	}
 }
 
 func postTask(w http.ResponseWriter, r *http.Request) {
 	var task Task
+
 	if r.Body == nil {
 		http.Error(w, "Нет тела запроса", http.StatusBadRequest)
 		return
@@ -73,15 +79,20 @@ func postTask(w http.ResponseWriter, r *http.Request) {
 	// Добавляем задачу в карту tasks
 	tasks[task.ID] = task
 
-	resp, err := json.Marshal(task)
+	resp, err := json.Marshal(tasks)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		fmt.Printf("Ошибка сериализации: %s\n", err.Error())
+		http.Error(w, "Ошибка сервера", http.StatusInternalServerError)
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 
-	w.Write(resp)
+	if _, err := w.Write(resp); err != nil {
+		// Логируем ошибку записи
+		fmt.Printf("Ошибка записи ответа: %s\n", err.Error())
+	}
 }
 
 func getTaskByID(w http.ResponseWriter, r *http.Request) {
@@ -93,16 +104,19 @@ func getTaskByID(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Задача не найдена", http.StatusNotFound)
 		return
 	}
-	resp, err := json.Marshal(task)
+	resp, err := json.Marshal(tasks)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		fmt.Printf("Ошибка сериализации: %s\n", err.Error())
+		http.Error(w, "Ошибка сервера", http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
-	w.Write(resp)
+	if _, err := w.Write(resp); err != nil {
+		fmt.Printf("Ошибка при записи ответа: %v\n", err)
+	}
 
 }
 
@@ -120,6 +134,7 @@ func delTaskID(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	w.WriteHeader(http.StatusOK)
+
 }
 
 func main() {
